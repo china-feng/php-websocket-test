@@ -1,0 +1,48 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <input type="text" id="v">
+        <input type="button" value="发送" onclick="s()">
+        <input type="button" value="断开" onclick="off()">
+    </body>
+    <script>
+        //创建socket，注意URL的格式：ws://ip:端口
+        so = new WebSocket('ws://127.0.0.1:8000');
+        console.log('start');
+        //握手监听函数
+        so.onopen=function(){
+            //状态为1证明握手成功，然后把client自定义的名字发送过去
+            // so.send('可以通话了');
+            console.log('握手成功');
+        }
+         
+        //握手失败或者其他原因连接socket失败，则清除so对象并做相应提示操作
+        so.onclose=function(){
+            so = false;
+            console.log('握手失败');
+        }
+         
+        //数据接收监听，接收服务器推送过来的信息，返回的数据给msg，然后进行显示
+        so.onmessage=function(msg){
+            console.log('服务器返回：');
+            console.log(msg);
+        }
+
+        so.onclose = function(){
+            // so = false;
+            console.log('服务器断开');
+        }
+
+        function s(){
+            console.log('send:' + document.getElementById('v').value);
+            so.send(document.getElementById('v').value);
+        }
+
+        function off(){
+            so = false;
+        }
+
+    </script>
+</html>
