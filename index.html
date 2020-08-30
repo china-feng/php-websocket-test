@@ -9,7 +9,7 @@
     </body>
     <script>
         //创建socket，注意URL的格式：ws://ip:端口
-        so = new WebSocket('ws://127.0.0.1:8000');
+        so = new WebSocket('ws://127.0.0.1:8000?token=123456');
         console.log('start');
         //握手监听函数
         so.onopen=function(){

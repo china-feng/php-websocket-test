@@ -100,14 +100,13 @@ class Sock
                             continue;
                         }
                         parse_str($buffer, $data);
-                        $route = new route();
-                        $res = $route->dispatch($data);
-                        if ($res === false) {
-                        	$this->e($route->getMsg());
-                        }
+                        
+                        $res = $this->dispatch($data);
 
+                        if ($res !== false) {
+            			    socket_write($this->users[$k]['socket'],$str,strlen($str));
+                        }
                         //单独对个人发送信息，即双方聊天
-            			socket_write($this->users[$k]['socket'],$str,strlen($str));
                         /*
                         //如果不为空，则进行消息推送操作
                         $this->send($k,$buffer);*/
@@ -116,7 +115,14 @@ class Sock
             }
         }         
     }
-   
+
+    public function dispatch($data){
+        $route = new route();
+        $res = $route->dispatch($data);
+        return $res;
+
+    }
+
 	//指定关闭$k对应的socket
 	public function close($k){
 		//断开相应的socket
