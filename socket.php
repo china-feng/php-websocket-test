@@ -59,7 +59,7 @@ class Sock
                     //接受一个socket连接
                     $client=socket_accept($this->master);
  					
- 					// socket_recv($client,$buf,1000,0);
+ 					socket_recv($client,$buf,1000,0);
  					// var_dump($buf);
 
                     //给新连接进来的socket一个唯一的ID
@@ -67,21 +67,25 @@ class Sock
                     $this->sockets[]=$client;  //将新连接进来的socket存进连接池
                     $this->users[$key]=array(
                         'socket'=>$client,  //记录新连接进来client的socket信息
-                        'shou'=>false       //标志该socket资源没有完成握手
+                        // 'shou'=>false       //标志该socket资源没有完成握手
                     );
-                    // $this->woshou($key,$buf);
+                    $this->handshake($key,$buf);
                 //否则1.为client断开socket连接，2.client发送信息
                 }else{
                     // continue;
-                    $len=0;
-                    $buffer='';
-                    //读取该socket的信息，注意：第二个参数是引用传参即接收数据，第三个参数是接收数据的长度
-                    do{
-                        $l=socket_recv($sock,$buf,1000,0);
-                        $len+=$l;
-                        $buffer.=$buf;
-                    }while($l==1000);
- 
+                    // $len=0;
+                    // $buffer='';
+                    // //读取该socket的信息，注意：第二个参数是引用传参即接收数据，第三个参数是接收数据的长度
+                    // do{
+                    //     $l=socket_recv($sock,$buf,1000,0);
+                    //     $len+=$l;
+                    //     $buffer.=$buf;
+                    // }while($l==1000);
+
+                    $buffer = $this->getClientData($sock); 
+                    $len = strlen($buffer);
+                    // var_dump(strlen($buffer));
+                    // var_dump($len);
                     //根据socket在user池里面查找相应的$k,即健ID
                     $k=$this->search($sock);
                     // echo "\r\n";
@@ -93,10 +97,10 @@ class Sock
                         continue;
                     }
                     //判断该socket是否已经握手
-                    if(!$this->users[$k]['shou']){
-                        //如果没有握手，则进行握手处理
-                        $this->woshou($k,$buffer);
-                    }
+                    // if(!$this->users[$k]['shou']){
+                    //     //如果没有握手，则进行握手处理
+                    //     $this->handshake($k,$buffer);
+                    // }
                         //走到这里就是该client发送信息了，对接受到的信息进行uncode处理
                         $buffer = $this->uncode($buffer, $k);
                         if($buffer==false){
@@ -104,8 +108,9 @@ class Sock
                         }
                         // parse_str($buffer, $data); //$data = ['action' => '', 'param' => []];
                         $data = json_decode($buffer, 1);
-                        if (empty($data)) {
+                        if (empty($data) || !is_array($data)) {
                             $this->send($k, '参数错误');
+                            continue;
                         }
                         $data['param']['socket'] = $this;
                         $data['param']['fd'] = $k;
@@ -125,6 +130,18 @@ class Sock
         }         
     }
 
+    //获取客服端发过来的数据
+    public function getClientData($socket){
+        //socket_recv() 返回一个数字，表示接收到的字节数。如果发生了错误，则返回 FALSE 错误码可使用 socket_last_error() 接收
+        $buffer = '';
+        do{
+            $l = socket_recv($socket,$buf,1000,0);
+            $buffer.= $buf;
+        }while($l == 1000);
+        return $buffer;
+    }
+
+    //路由调度
     public function dispatch($data){
         $route = new route();
         $res = $route->dispatch($data);
@@ -164,7 +181,7 @@ class Sock
     * @$k clien的socket对应的健，即每个用户有唯一$k并对应socket
     * @$buffer 接收client请求的所有信息
     */
-    function woshou($k,$buffer){
+    function handshake($k,$buffer){
  
         //截取Sec-WebSocket-Key的值并加密，其中$key后面的一部分258EAFA5-E914-47DA-95CA-C5AB0DC85B11字符串应该是固定的
         $buf  = substr($buffer,strpos($buffer,'Sec-WebSocket-Key:')+18);

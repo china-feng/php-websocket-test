@@ -1,7 +1,7 @@
 <?php
  
 /**
-* 多个进程监听同个端口
+* 多个进程监听同个端口 需要安装pcntl window 平台不支持
 */
 class Server
 {
