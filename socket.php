@@ -53,6 +53,7 @@ class Sock
             foreach($changes as $sock){
                  // var_dump($sock); //socket 资源
                 //如果有新的client连接进来，则
+                var_dump(1);
                 if($sock==$this->master){
  
                     //接受一个socket连接
@@ -68,8 +69,10 @@ class Sock
                         'socket'=>$client,  //记录新连接进来client的socket信息
                         'shou'=>false       //标志该socket资源没有完成握手
                     );
+                    // $this->woshou($key,$buf);
                 //否则1.为client断开socket连接，2.client发送信息
                 }else{
+                    // continue;
                     $len=0;
                     $buffer='';
                     //读取该socket的信息，注意：第二个参数是引用传参即接收数据，第三个参数是接收数据的长度
@@ -95,17 +98,23 @@ class Sock
                         $this->woshou($k,$buffer);
                     }
                         //走到这里就是该client发送信息了，对接受到的信息进行uncode处理
-                        $buffer = $this->uncode($buffer,$k);
+                        $buffer = $this->uncode($buffer, $k);
                         if($buffer==false){
                             continue;
                         }
-                        parse_str($buffer, $data);
-                        
-                        $res = $this->dispatch($data);
-
-                        if ($res !== false) {
-            			    socket_write($this->users[$k]['socket'],$str,strlen($str));
+                        // parse_str($buffer, $data); //$data = ['action' => '', 'param' => []];
+                        $data = json_decode($buffer, 1);
+                        if (empty($data)) {
+                            $this->send($k, '参数错误');
                         }
+                        $data['param']['socket'] = $this;
+                        $data['param']['fd'] = $k;
+                        // var_dump($data);
+                        $this->dispatch($data);
+
+                   //      if ($res !== false) {
+            			    // socket_write($this->users[$k]['socket'],$str,strlen($str));
+                   //      }
                         //单独对个人发送信息，即双方聊天
                         /*
                         //如果不为空，则进行消息推送操作
@@ -119,8 +128,9 @@ class Sock
     public function dispatch($data){
         $route = new route();
         $res = $route->dispatch($data);
-        return $res;
-
+        if ($res === false) {
+            $this->e($route->getMsg());
+        }
     }
 
 	//指定关闭$k对应的socket
@@ -260,7 +270,7 @@ class Sock
     //用户加入或client发送信息
     public function send($k,$msg){
         //将查询字符串解析到第二个参数变量中，以数组的形式保存如：parse_str("name=Bill&age=60",$arr)
-        parse_str($msg,$g);
+        /*parse_str($msg,$g);
         $ar=array();
  
         if($g['type']=='add'){
@@ -275,7 +285,9 @@ class Sock
             $key=$g['key'];
         }
         //推送信息
-        $this->send1($k,$ar,$key);
+        $this->send1($k,$ar,$key);*/
+        $str = $this->code($msg);
+        socket_write($this->users[$k]['socket'], $str, strlen($str));
     }
 
     //对新加入的client推送已经在线的client

@@ -37,7 +37,10 @@ class route
 				return false;
 			}
 			include_once __DIR__ . '/controller/' . $this->controller . '.php';
-			return call_user_method_array($this->action, new $this->controller,$this->param);
+			// return call_user_method_array($this->action, new $this->controller,$this->param);
+			// var_dump($this->param);
+			$obj = $this->controller;
+			return call_user_func_array(array(new $obj(), $this->action), array($this->param)); 
 		}
 		$this->msg = 'action error';
 		return false;
