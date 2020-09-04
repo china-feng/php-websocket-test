@@ -5,7 +5,7 @@ ob_implicit_flush();
 
 include_once __DIR__ . '/route.php';
 
-$sk = new Sock('127.0.0.1', 8000);
+$sk = new Sock('0.0.0.0', 8000);
 
 $sk->run();
 
