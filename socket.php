@@ -55,7 +55,7 @@ class Sock
                 //如果有新的client连接进来，则
                 var_dump(1);
                 if($sock==$this->master){
- 
+                    var_dump(-1);
                     //接受一个socket连接
                     $client=socket_accept($this->master);
  					
@@ -72,6 +72,7 @@ class Sock
                     $this->handshake($key,$buf);
                 //否则1.为client断开socket连接，2.client发送信息
                 }else{
+                    var_dump(-2);
                     // continue;
                     // $len=0;
                     // $buffer='';
