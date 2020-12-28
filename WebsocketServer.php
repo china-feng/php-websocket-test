@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * 不需要额外安装扩展；但是此类在windows 执行会有问题，linux无问题
+ */
 class WebsocketServer
 {
     private $address = '0.0.0.0';
@@ -178,9 +180,9 @@ class WebsocketServer
         $opcode = $opcode_ints[$opcode_int];
 
         // Record the opcode if we are not receiving a continutation fragment
-        if ($opcode !== 'continuation') {
-            $this->last_opcode = $opcode;
-        }
+        // if ($opcode !== 'continuation') {
+        //     $this->last_opcode = $opcode;
+        // }
 
         // Masking?
         $mask = (bool) (ord($data[1]) >> 7);  // Bit 0 in byte 1
@@ -227,18 +229,18 @@ class WebsocketServer
             if ($payload_length > 0) {
                 $status_bin = $payload[0] . $payload[1];
                 $status = bindec(sprintf("%08b%08b", ord($payload[0]), ord($payload[1])));
-                $this->close_status = $status;
+                // $this->close_status = $status;
             }
             // Get additional close message-
             if ($payload_length >= 2) {
                 $payload = substr($payload, 2);
             }
 
-            if ($this->is_closing) {
-                $this->is_closing = false; // A close response, all done.
-            } else {
+            // if ($this->is_closing) {
+            //     $this->is_closing = false; // A close response, all done.
+            // } else {
                 $this->send($client_id, $status_bin . 'Close acknowledged: ' . $status, 'close', true); // Respond.
-            }
+            // }
 
             // Close the socket.
             fclose($this->clients[$client_id]);
@@ -414,7 +416,7 @@ class WebsocketServer
         unset($this->clients[$client_id]);
     }
 
-    protected function throwException($message, $code = 0)
+    public function throwException($message, $code = 0)
     {
         throw new \Exception($message, $code);
     }
@@ -430,19 +432,19 @@ class WebsocketServer
     }
 }
  
-$service = new WebsocketServer('0.0.0.0','8000');
+// $service = new WebsocketServer('0.0.0.0','8000');
 
-$service->on('onConnect',function($websocket_server, $client_id){
-    $websocket_server->send($client_id, '完成了连接：{$client_id}');
-});
+// $service->on('onConnect',function($websocket_server, $client_id){
+//     $websocket_server->send($client_id, '完成了连接：{$client_id}');
+// });
 
-$service->on('onMessage',function($websocket_server, $client_id, $msg){
-    $websocket_server->send($client_id, '服务器看到了您发过来的信息:' . $msg);
-});
+// $service->on('onMessage',function($websocket_server, $client_id, $msg){
+//     $websocket_server->send($client_id, '服务器看到了您发过来的信息:' . $msg);
+// });
 
-$service->on('onClose',function($websocket_server, $client_id){
-    //关闭之后不能经行通信
-    // $websocket_server->send($client_id, '您主动关闭了连接' . $client_id);
-});
+// $service->on('onClose',function($websocket_server, $client_id){
+//     //关闭之后不能经行通信
+//     // $websocket_server->send($client_id, '您主动关闭了连接' . $client_id);
+// });
 
-$service->run();
+// $service->run();
